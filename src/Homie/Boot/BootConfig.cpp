@@ -67,7 +67,7 @@ void BootConfig::setup() {
       Interface::get().getLogger() << F("Received CORS request for ")<< request->url() << endl;
       request->send(200);
     } else {
-      _onCaptivePortal(request);
+      //_onCaptivePortal(request);
     }
   });
   _http.begin();
