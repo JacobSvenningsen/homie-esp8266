@@ -71,6 +71,7 @@ class BootNormal : public Boot {
   bool _mqttDisconnectNotified;
   bool _otaOngoing;
   bool _flaggedForReboot;
+  bool _halfwayToFinish;
   uint16_t _mqttOfflineMessageId;
   char _fwChecksum[32 + 1];
   bool _otaIsBase64;
@@ -78,6 +79,7 @@ class BootNormal : public Boot {
   size_t _otaBase64Pads;
   size_t _otaSizeTotal;
   size_t _otaSizeDone;
+  size_t _otaSizeHalfTotal;
 
   std::unique_ptr<char[]> _mqttTopic;
 

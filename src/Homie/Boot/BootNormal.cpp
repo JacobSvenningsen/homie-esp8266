@@ -690,7 +690,9 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
       }
       _otaSizeDone = 0;
       _otaSizeTotal = _otaIsBase64 ? base64_decode_expected_len(total) : total;
+      _otaSizeHalfTotal = _otaSizeTotal / 2;
       bool success = Update.begin(_otaSizeTotal);
+      _halfwayToFinish = false;
       if (!success) {
         // Detected error during begin (e.g. size == 0 or size > space)
         _endOtaUpdate(false, Update.getError());
@@ -760,18 +762,20 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
           _otaSizeTotal -= _otaBase64Pads;
         }
 
-        String progress(_otaSizeDone);
-        progress.concat(F("/"));
-        progress.concat(_otaSizeTotal);
-        Interface::get().getLogger() << F("Receiving OTA firmware (") << progress << F(")...") << endl;
+        if (!_halfwayToFinish && _otaSizeHalfTotal <= _otaSizeDone) {
+          _halfwayToFinish = true;
+          String progress(_otaSizeDone);
+          progress.concat(F("/"));
+          progress.concat(_otaSizeTotal);
+          Interface::get().getLogger() << F("Receiving OTA firmware (") << progress << "50%" << F(")...") << endl;
 
-        Interface::get().event.type = HomieEventType::OTA_PROGRESS;
-        Interface::get().event.sizeDone = _otaSizeDone;
-        Interface::get().event.sizeTotal = _otaSizeTotal;
-        Interface::get().eventHandler(Interface::get().event);
+          Interface::get().event.type = HomieEventType::OTA_PROGRESS;
+          Interface::get().event.sizeDone = _otaSizeDone;
+          Interface::get().event.sizeTotal = _otaSizeTotal;
+          Interface::get().eventHandler(Interface::get().event);
 
-        _publishOtaStatus(206, progress.c_str());  // 206 Partial Content
-
+          _publishOtaStatus(206, "50% done");  // 206 Partial Content
+        }
                                                    //  Done with the update?
         if (index + len == total) {
           // With base64-coded firmware, we may have provided a length off by one or two
