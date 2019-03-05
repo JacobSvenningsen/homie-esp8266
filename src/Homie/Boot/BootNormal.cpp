@@ -182,6 +182,17 @@ char* BootNormal::_prefixMqttTopic(PGM_P topic) {
   return _mqttTopic.get();
 }
 
+void BootNormal::_prefixMqttTopicForFlash() {
+  strcpy(_mqttTopic.get(), Interface::get().getConfig().get().mqtt.baseTopic);
+}
+
+char* BootNormal::_prefixMqttTopicForFlash(PGM_P topic) {
+  _prefixMqttTopicForFlash();
+  strcat_P(_mqttTopic.get(), topic);
+
+  return _mqttTopic.get();
+}
+
 bool BootNormal::_publishOtaStatus(int status, const char* info) {
   String payload(status);
   if (info) {
@@ -448,7 +459,7 @@ void BootNormal::_advertise() {
       break;
     }
     case AdvertisementProgress::GlobalStep::SUB_IMPLEMENTATION_OTA:
-      packetId = Interface::get().getMqttClient().subscribe(_prefixMqttTopic(PSTR("/$implementation/ota/firmware/+")), 1);
+      packetId = Interface::get().getMqttClient().subscribe(_prefixMqttTopicForFlash(PSTR("/firmware/+")), 1);
       if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::SUB_IMPLEMENTATION_RESET;
       break;
     case AdvertisementProgress::GlobalStep::SUB_IMPLEMENTATION_RESET:
@@ -612,12 +623,10 @@ bool HomieInternals::BootNormal::__fillPayloadBuffer(char * topic, char * payloa
 
 bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total) {
   if (
-    _mqttTopicLevelsCount == 5
-    && strcmp(_mqttTopicLevels.get()[0], Interface::get().getConfig().get().deviceId) == 0
-    && strcmp_P(_mqttTopicLevels.get()[1], PSTR("$implementation")) == 0
-    && strcmp_P(_mqttTopicLevels.get()[2], PSTR("ota")) == 0
-    && strcmp_P(_mqttTopicLevels.get()[3], PSTR("firmware")) == 0
+    _mqttTopicLevelsCount == 3
+    && strcmp_P(_mqttTopicLevels.get()[0], PSTR("firmware")) == 0
     ) {
+    
     if (index == 0) {
       Interface::get().getLogger() << F("Receiving OTA payload") << endl;
       if (!Interface::get().getConfig().get().ota.enabled) {
@@ -626,7 +635,7 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
         return true;
       }
 
-      char* firmwareMd5 = _mqttTopicLevels.get()[4];
+      char* firmwareMd5 = _mqttTopicLevels.get()[1];
       if (!Helpers::validateMd5(firmwareMd5)) {
         _endOtaUpdate(false, UPDATE_ERROR_MD5);
         Interface::get().getLogger() << F("✖ Aborting, invalid MD5") << endl;

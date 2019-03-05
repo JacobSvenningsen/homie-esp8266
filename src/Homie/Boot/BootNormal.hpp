@@ -98,6 +98,8 @@ class BootNormal : public Boot {
   void _onMqttPublish(uint16_t id);
   void _prefixMqttTopic();
   char* _prefixMqttTopic(PGM_P topic);
+  void _prefixMqttTopicForFlash();
+  char* _prefixMqttTopicForFlash(PGM_P topic);
   bool _publishOtaStatus(int status, const char* info = nullptr);
   void _endOtaUpdate(bool success, uint8_t update_error = UPDATE_ERROR_OK);
 
