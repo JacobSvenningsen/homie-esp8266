@@ -172,6 +172,7 @@ void BootNormal::loop() {
 
 void BootNormal::_prefixMqttTopic() {
   strcpy(_mqttTopic.get(), Interface::get().getConfig().get().mqtt.baseTopic);
+  strcat(_mqttTopic.get(), "/");
   strcat(_mqttTopic.get(), Interface::get().getConfig().get().deviceId);
 }
 
